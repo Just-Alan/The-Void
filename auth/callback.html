@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>entering...</title>
+    <style>
+        body { background: black; color: rgba(139,92,246,0.7); font-family: Georgia, serif; 
+               display: flex; align-items: center; justify-content: center; height: 100vh; }
+    </style>
+</head>
+<body>
+    <p>the void recognizes you...</p>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+
+        async function exchangeCode() {
+            const response = await fetch("https://your-vercel-project.vercel.app/api/exchange", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code })
+            });
+
+            const data = await response.json();
+            const accessToken = data.access_token;
+
+            const userResponse = await fetch("https://auth.hackclub.com/api/v1/me", {
+                headers: { "Authorization": `Bearer ${accessToken}` }
+            });
+
+            const userData = await userResponse.json();
+
+            localStorage.setItem("void_user_id", userData.sub);
+            localStorage.setItem("void_verified", userData.verification_status);
+
+            window.location.href = "/index.html";
+        }
+
+        if (code) {
+            exchangeCode();
+        } else {
+            document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
+        }
+    </script>
+</body>
+</html>
