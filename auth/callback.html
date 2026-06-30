@@ -14,7 +14,7 @@
         const code = params.get("code");
 
         async function exchangeCode() {
-            const response = await fetch("https://your-vercel-project.vercel.app/api/exchange", {
+            const response = await fetch("https://the-void-dusky.vercel.app/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code: code })
@@ -32,7 +32,7 @@
             localStorage.setItem("void_user_id", userData.sub);
             localStorage.setItem("void_verified", userData.verification_status);
 
-            window.location.href = "/index.html";
+            window.location.href = "https://the-void-dusky.vercel.app/";
         }
 
         if (code) {
@@ -43,3 +43,5 @@
     </script>
 </body>
 </html>
+
+

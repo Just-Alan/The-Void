@@ -43,6 +43,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 2rem;
+    
 }
 
 .void-line {
@@ -89,13 +90,155 @@ body {
         <p class="void-line" id="line3">where thoughts drift forever.</p>
     </div>
     <button id="enter-btn">[ enter ]</button>
+    <div id="name-screen" style="display: none;">
+        <p class="void-line visible">give yourself a name.</p>
+        <p class="void-line visible" style="font-size: 1rem; opacity: 0.6;">six characters. choose wisely.</p>
+        <input id="name-input" maxlength="6" style="
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(139,92,246,0.5);
+            color: rgba(200,180,255,0.9);
+            font-family: Georgia, serif;
+            font-size: 2rem;
+            letter-spacing: 0.5em;
+            text-align: center;
+            text-transform: uppercase;
+            width: 250px;
+            outline: none;
+            padding: 0.5rem;
+        ">
+        <button id="name-confirm-btn" style="
+            margin-top: 1rem;
+            font-family: Georgia, serif;
+            font-size: 1rem;
+            letter-spacing: 0.3em;
+            color: rgba(139,92,246,0.7);
+            background: transparent;
+            border: 1px solid rgba(139,92,246,0.3);
+            padding: 0.8rem 2rem;
+            cursor: pointer;
+        ">[ confirm ]</button>
+    </div>
+    <div id="color-screen" style="display: none;">
+        <p class="void-line visible">choose the color of your thoughts.</p>
+        <div id="color-palette" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0;"></div>
+        <input type="color" id="custom-color" value="#8b5cf6">
+        <button id="color-confirm-btn" style="
+            margin-top: 1rem;
+            font-family: Georgia, serif;
+            font-size: 1rem;
+            letter-spacing: 0.3em;
+            color: rgba(139,92,246,0.7);
+            background: transparent;
+            border: 1px solid rgba(139,92,246,0.3);
+            padding: 0.8rem 2rem;
+            cursor: pointer;
+        ">[ confirm ]</button>
+    </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+const HCA_AUTH_URL = "https://auth.hackclub.com/oauth/authorize?client_id=b4916f2e2bfd2bf6129e057a6ad8efeb&redirect_uri=https%3A%2F%2Fthe-void-dusky.vercel.app%2Fauth%2Fcallback.html&response_type=code&scope=openid+verification_status";
+const SUPABASE_URL = "https://mdhfteyyoihcwgbkxwab.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kaGZ0ZXl5b2loY3dnYmt4d2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MzY5MjcsImV4cCI6MjA5ODMxMjkyN30.EBdDrf-fYthrVedkvaGAcI8UL6b0MK9-LPziCpMZnas";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const userId = localStorage.getItem("void_user_id");
 
+let chosenName = "";
+let chosenColor = "#8b5cf6";
+
+const PALETTE = [
+    "#581c87", "#6d28d9", "#1e1b4b", "#3730a3",
+    "#8b5cf6", "#dc2626", "#f8fafc", "#0c4a6e",
+    "#7c2d12", "#365314", "#831843", "#1e293b"
+];
+
+function showNameScreen() {
+    document.getElementById("name-screen").style.display = "flex";
+    document.getElementById("name-screen").style.flexDirection = "column";
+    document.getElementById("name-screen").style.alignItems = "center";
+}
+
+function showColorScreen() {
+    document.getElementById("name-screen").style.display = "none";
+    document.getElementById("color-screen").style.display = "flex";
+    document.getElementById("color-screen").style.flexDirection = "column";
+    document.getElementById("color-screen").style.alignItems = "center";
+
+    const palette = document.getElementById("color-palette");
+    PALETTE.forEach(hex => {
+        const swatch = document.createElement("div");
+        swatch.style.width = "40px";
+        swatch.style.height = "40px";
+        swatch.style.borderRadius = "50%";
+        swatch.style.background = hex;
+        swatch.style.cursor = "pointer";
+        swatch.style.border = "2px solid transparent";
+        swatch.onclick = () => {
+            chosenColor = hex;
+            document.querySelectorAll("#color-palette div").forEach(d => d.style.border = "2px solid transparent");
+            swatch.style.border = "2px solid white";
+        };
+        palette.appendChild(swatch);
+    });
+}
+
+function enterMainVoid() {
+    console.log("entering main void as", chosenName, chosenColor);
+}
+
+async function checkUser() {
+    if (!userId) return;
+    const { data, error } = await sb
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    if (data) {
+        enterMainVoid();
+    } else {
+        showNameScreen();
+    }
+}
+
+document.getElementById("name-confirm-btn").onclick = () => {
+    const value = document.getElementById("name-input").value.trim();
+    if (value.length < 1) return;
+    chosenName = value.toUpperCase();
+    showColorScreen();
+};
+
+document.getElementById("custom-color").oninput = (e) => {
+    chosenColor = e.target.value;
+};
+
+document.getElementById("color-confirm-btn").onclick = async () => {
+    const { error } = await sb.from('users').insert({
+        id: userId,
+        display_name: chosenName,
+        thought_color: chosenColor
+    });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    document.getElementById("color-screen").style.display = "none";
+    enterMainVoid();
+};
+
+document.getElementById("enter-btn").onclick = () => {
+    window.location.href = HCA_AUTH_URL;
+    console.log("entering the void...");
+};
+
+
 if (userId) {
-    document.getElementById("enter-btn").textContent = "[ continue ]";
+    document.getElementById("content").style.display = "none";
+    checkUser();
 }
 
 const shaderCanvas = document.getElementById("shader-canvas");
@@ -280,19 +423,14 @@ function animate(){
 }
 animate();
 
-const HCA_AUTH_URL = "https://auth.hackclub.com/oauth/authorize?client_id=b4916f2e2bfd2bf6129e057a6ad8efeb&redirect_uri=https%3A%2F%2Fjust-alan.github.io%2FThe-Void%2Fauth%2Fcallback.html&response_type=code&scope=openid+verification_status"
-
 
 setTimeout(()=>document.getElementById("line1").classList.add("visible"),1000);
 setTimeout(()=>document.getElementById("line2").classList.add("visible"),2500);
 setTimeout(()=>document.getElementById("line3").classList.add("visible"),4000);
 setTimeout(()=>document.getElementById("enter-btn").classList.add("visible"),5500);
-
-document.getElementById("enter-btn").onclick = () => {
-    window.location.href = HCA_AUTH_URL;
-    console.log("entering the void...");
-};
 </script>
 
 </body>
 </html>
+
+
