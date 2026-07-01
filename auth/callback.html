@@ -32,8 +32,12 @@
 
             window.location.href = "https://the-void-dusky.vercel.app/";
         }
+
+        if (code) {
+            exchangeCode();
+        } else {
+            document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
+        }
     </script>
 </body>
 </html>
-
-
