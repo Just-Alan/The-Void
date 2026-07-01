@@ -7,18 +7,20 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    let body = req.body;
-    if (typeof body === "string") {
-        body = JSON.parse(body);
-    }
+    const rawBody = await new Promise((resolve) => {
+        let data = "";
+        req.on("data", chunk => data += chunk);
+        req.on("end", () => resolve(data));
+    });
 
-    const { code } = body;
+    const { code } = JSON.parse(rawBody);
 
     if (!code) {
-        return res.status(400).json({ error: "no code provided" });
+        return res.status(400).json({ error: "no code" });
     }
 
-    const response = await fetch("https://auth.hackclub.com/oauth/token", {
+
+    const tokenResponse = await fetch("https://auth.hackclub.com/oauth/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -30,6 +32,22 @@ export default async function handler(req, res) {
         })
     });
 
-    const data = await response.json();
-    res.status(200).json(data);
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenData.access_token) {
+        return res.status(400).json({ error: "no access token", details: tokenData });
+    }
+
+
+    const userResponse = await fetch("https://auth.hackclub.com/api/v1/me", {
+        headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+    });
+
+    const userData = await userResponse.json();
+
+
+    res.status(200).json({
+        user_id: userData.id || userData.sub,
+        verified: userData.verification_status
+    });
 }
