@@ -7,7 +7,16 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    const { code } = req.body;
+    let body = req.body;
+    if (typeof body === "string") {
+        body = JSON.parse(body);
+    }
+
+    const { code } = body;
+
+    if (!code) {
+        return res.status(400).json({ error: "no code provided" });
+    }
 
     const response = await fetch("https://auth.hackclub.com/oauth/token", {
         method: "POST",
