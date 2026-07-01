@@ -1,19 +1,45 @@
-async function exchangeCode() {
-    const response = await fetch("https://the-void-dusky.vercel.app/api/exchange", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code })
-    });
+<!DOCTYPE html>
+<html>
+<head>
+    <title>entering...</title>
+    <style>
+        body { background: black; color: rgba(139,92,246,0.7); font-family: Georgia, serif; 
+               display: flex; align-items: center; justify-content: center; height: 100vh; }
+    </style>
+</head>
+<body>
+    <p>the void recognizes you...</p>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
 
-    const data = await response.json();
+        async function exchangeCode() {
+            const response = await fetch("https://the-void-dusky.vercel.app/api/exchange", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code })
+            });
 
-    if (!data.user_id) {
-        document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
-        return;
-    }
+            const data = await response.json();
 
-    localStorage.setItem("void_user_id", data.user_id);
-    localStorage.setItem("void_verified", data.verified);
+            if (!data.user_id) {
+                document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
+                return;
+            }
 
-    window.location.href = "https://the-void-dusky.vercel.app/";
-}
+            localStorage.setItem("void_user_id", data.user_id);
+            localStorage.setItem("void_verified", data.verified);
+
+            window.location.href = "https://the-void-dusky.vercel.app/";
+        }
+
+        if (code) {
+            exchangeCode();
+        } else {
+            document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
+        }
+    </script>
+</body>
+</html>
+
+
