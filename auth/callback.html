@@ -21,6 +21,7 @@
             });
 
             const data = await response.json();
+            console.log("response from exchange:", JSON.stringify(data)); // ADD THIS
 
             if (!data.user_id) {
                 document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
