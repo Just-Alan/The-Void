@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     console.log("userData:", JSON.stringify(userData));
 
     res.status(200).json({
-        user_id: userData.id || userData.sub,
-        verified: userData.verification_status
+        user_id: userData.identity.id,
+        verified: userData.identity.verification_status
     });
 }
