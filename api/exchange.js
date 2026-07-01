@@ -13,12 +13,22 @@ export default async function handler(req, res) {
         req.on("end", () => resolve(data));
     });
 
-    const { code } = JSON.parse(rawBody);
+    console.log("rawBody received:", rawBody);
+
+    let code;
+    try {
+        const parsed = JSON.parse(rawBody);
+        code = parsed.code;
+    } catch(e) {
+        console.log("JSON parse error:", e);
+        return res.status(400).json({ error: "bad json" });
+    }
+
+    console.log("code:", code);
 
     if (!code) {
         return res.status(400).json({ error: "no code" });
     }
-
 
     const tokenResponse = await fetch("https://auth.hackclub.com/oauth/token", {
         method: "POST",
@@ -33,18 +43,18 @@ export default async function handler(req, res) {
     });
 
     const tokenData = await tokenResponse.json();
+    console.log("tokenData:", JSON.stringify(tokenData));
 
     if (!tokenData.access_token) {
         return res.status(400).json({ error: "no access token", details: tokenData });
     }
-
 
     const userResponse = await fetch("https://auth.hackclub.com/api/v1/me", {
         headers: { "Authorization": `Bearer ${tokenData.access_token}` }
     });
 
     const userData = await userResponse.json();
-
+    console.log("userData:", JSON.stringify(userData));
 
     res.status(200).json({
         user_id: userData.id || userData.sub,
