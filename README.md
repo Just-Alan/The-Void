@@ -15,9 +15,13 @@ Thoughts that keep getting released glow brighter over time. Most people won't n
 
 Tech stack
 Frontend — vanilla HTML, CSS, and JavaScript with a WebGL vortex shader
+
 Database — Supabase (users, thoughts, deliveries)
+
 Auth — Hack Club Auth (HCA), Stardancers only
+
 Moderation — Groq API (llama-3.3-70b-versatile) checks every thought before delivery
+
 Backend — Vercel serverless functions for the OAuth token exchange and moderation
 
 No install needed, just go to https://the-void-dusky.vercel.app and see for yourself how it works.
