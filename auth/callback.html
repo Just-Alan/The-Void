@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>entering...</title>
+<style>
+    * { margin: 0; padding: 0; }
+    body { 
+        background: black; 
+        color: rgba(139,92,246,0.7); 
+        font-family: Georgia, serif; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        height: 100vh;
+        opacity: 1;
+        transition: opacity 0.5s ease;
+    }
+    body.fade { opacity: 0; }
+</style>
+</head>
+<body>
+    <p>the void recognizes you...</p>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+
+        async function exchangeCode() {
+            const response = await fetch("https://the-void-dusky.vercel.app/api/exchange", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code })
+            });
+
+            const data = await response.json();
+            console.log("response from exchange:", JSON.stringify(data)); 
+
+            if (!data.user_id) {
+                document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
+                return;
+            }
+
+            localStorage.setItem("void_user_id", data.user_id);
+            localStorage.setItem("void_verified", data.verified);
+
+            document.body.classList.add("fade");
+            setTimeout(() => {
+                window.location.href = "https://the-void-dusky.vercel.app/";
+            }, 500);
+        }
+
+        if (code) {
+            exchangeCode();
+        } else {
+            document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
+        }
+    </script>
+</body>
+</html>
