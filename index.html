@@ -166,7 +166,7 @@ body {
 const DEBUG_MODE = false; //false for not debugging gang
 const COOLDOWN_MS = DEBUG_MODE ? 10000 : 86400000;
 
-const HCA_AUTH_URL = "https://auth.hackclub.com/oauth/authorize?client_id=b4916f2e2bfd2bf6129e057a6ad8efeb&redirect_uri=https%3A%2F%2Fthe-void-dusky.vercel.app%2Fauth%2Fcallback.html&response_type=code&scope=openid+verification_status";
+const HCA_AUTH_URL = "https://auth.hackclub.com/oauth/authorize?client_id=b4916f2e2bfd2bf6129e057a6ad8efeb&redirect_uri=https%3A%2F%2Fthe-void-dusky.vercel.app%2Fauth%2Fcallback.html&response_type=code&scope=openid+verification_status+slack_id";
 const SUPABASE_URL = "https://mdhfteyyoihcwgbkxwab.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kaGZ0ZXl5b2loY3dnYmt4d2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MzY5MjcsImV4cCI6MjA5ODMxMjkyN30.EBdDrf-fYthrVedkvaGAcI8UL6b0MK9-LPziCpMZnas";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -499,7 +499,9 @@ async function submitThought() {
 
 async function deliverThought(thoughtId) {
     const { data: users } = await sb
-        .from('users').select('id').neq('id', userId);
+        .from('users')
+        .select('id, slack_id')
+        .neq('id', userId);
 
     if (!users || users.length === 0) return;
 
@@ -510,7 +512,19 @@ async function deliverThought(thoughtId) {
         recipient_id: recipient.id,
         status: 'pending'
     });
+
+    if (recipient.slack_id) {
+        await fetch("https://the-void-dusky.vercel.app/api/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                slack_id: recipient.slack_id,
+                message: "something has drifted to you from the void.\n\nhttps://the-void-dusky.vercel.app"
+            })
+        });
+    }
 }
+  
 
 let pendingDeliveries = [];
 let currentDeliveryIndex = 0;

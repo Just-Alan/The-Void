@@ -36,10 +36,11 @@
 
             if (!data.user_id) {
                 document.body.innerHTML = "<p>something went wrong. the void rejects you.</p>";
-                return;
+                return
             }
 
             localStorage.setItem("void_user_id", data.user_id);
+            localStorage.setItem("void_slack_id", data.slack_id);
             localStorage.setItem("void_verified", data.verified);
 
             document.body.classList.add("fade");

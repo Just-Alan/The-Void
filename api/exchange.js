@@ -3,9 +3,7 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    if (req.method === "OPTIONS") {
-        return res.status(200).end();
-    }
+    if (req.method === "OPTIONS") return res.status(200).end();
 
     const rawBody = await new Promise((resolve) => {
         let data = "";
@@ -13,51 +11,24 @@ export default async function handler(req, res) {
         req.on("end", () => resolve(data));
     });
 
-    console.log("rawBody received:", rawBody);
+    const { slack_id, message } = JSON.parse(rawBody);
 
-    let code;
-    try {
-        const parsed = JSON.parse(rawBody);
-        code = parsed.code;
-    } catch(e) {
-        console.log("JSON parse error:", e);
-        return res.status(400).json({ error: "bad json" });
+    if (!slack_id || !message) {
+        return res.status(400).json({ error: "missing slack_id or message" });
     }
 
-    console.log("code:", code);
-
-    if (!code) {
-        return res.status(400).json({ error: "no code" });
-    }
-
-    const tokenResponse = await fetch("https://auth.hackclub.com/oauth/token", {
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.SLACK_BOT_TOKEN}`
+        },
         body: JSON.stringify({
-            client_id: process.env.HCA_CLIENT_ID,
-            client_secret: process.env.HCA_CLIENT_SECRET,
-            code: code,
-            redirect_uri: "https://the-void-dusky.vercel.app/auth/callback.html",
-            grant_type: "authorization_code"
+            channel: slack_id,
+            text: message
         })
     });
 
-    const tokenData = await tokenResponse.json();
-    console.log("tokenData:", JSON.stringify(tokenData));
-
-    if (!tokenData.access_token) {
-        return res.status(400).json({ error: "no access token", details: tokenData });
-    }
-
-    const userResponse = await fetch("https://auth.hackclub.com/api/v1/me", {
-        headers: { "Authorization": `Bearer ${tokenData.access_token}` }
-    });
-
-    const userData = await userResponse.json();
-    console.log("userData:", JSON.stringify(userData));
-
-    res.status(200).json({
-        user_id: userData.identity.id,
-        verified: userData.identity.verification_status
-    });
+    const data = await response.json();
+    res.status(200).json(data);
 }
